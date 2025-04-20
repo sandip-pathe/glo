@@ -34,7 +34,7 @@ export async function handler(event) {
               {
                 type: "image_url",
                 image_url: {
-                  url: imageDataUrl,
+                  url: skinImage,
                 },
               },
             ],

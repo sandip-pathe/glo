@@ -381,8 +381,16 @@
           };
 
           console.log("User Profile:", userProfile);
+
           try {
+            console.log(
+              "Fetching from:",
+              "/.netlify/functions/fetchProductRecommendations"
+            );
+            console.log("Payload:", JSON.stringify({ userProfile }));
+
             const result = await fetchProductRecommendations(userProfile);
+            console.log("Recommendations result:", result);
             await updateStepDetail(
               4,
               `Found ${result.products.length} perfect matches for your skin`
@@ -439,22 +447,35 @@
 
       // Independent product recommendations function
       async function fetchProductRecommendations(userProfile) {
-        const response = await fetch(
-          "/.netlify/functions/fetchProductRecommendations",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ userProfile }),
+        try {
+          const response = await fetch(
+            "/.netlify/functions/fetchProductRecommendations",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Accept: "application/json",
+              },
+              body: JSON.stringify({ userProfile }),
+            }
+          );
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(
+              errorData.message || "Failed to fetch recommendations"
+            );
           }
-        );
 
-        if (!response.ok) {
-          throw new Error("Failed to fetch recommendations");
+          const data = await response.json();
+          if (!data.products) {
+            throw new Error("Invalid response format - missing products array");
+          }
+          return data;
+        } catch (error) {
+          console.error("Fetch error:", error);
+          throw new Error("Network error while fetching recommendations");
         }
-
-        return await response.json();
       }
 
       // Improved results display
