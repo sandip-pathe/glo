@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GlowGuide | Skin Analysis Quiz</title>
+    <!-- Bootstrap 5 CSS -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <!-- Google Fonts -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <!-- Custom CSS -->
+    <style>
+      :root {
+        --primary: #8a2be2;
+        --secondary: #ff6b6b;
+      }
+      body {
+        font-family: "Poppins", sans-serif;
+        background-color: #f8f9fa;
+      }
+      .quiz-container {
+        max-width: 600px;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(138, 43, 226, 0.1);
+      }
+      .quiz-header {
+        background: linear-gradient(45deg, var(--primary), var(--secondary));
+        color: white;
+      }
+      .option-card {
+        border: 2px solid #e9ecef;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.3s;
+        overflow: hidden;
+      }
+      .option-card:hover {
+        border-color: var(--primary);
+        transform: translateY(-3px);
+      }
+      .option-card.selected {
+        border-color: var(--primary);
+        background-color: rgba(138, 43, 226, 0.05);
+      }
+      .option-img {
+        height: 100px;
+        object-fit: cover;
+        border-bottom: 1px solid #e9ecef;
+      }
+      #cameraModal .modal-content {
+        border-radius: 20px;
+      }
+      #cameraPreview {
+        width: 100%;
+        background: #f8f9fa;
+        border-radius: 10px;
+        aspect-ratio: 4/3;
+      }
+      .btn-primary {
+        background: linear-gradient(45deg, var(--primary), var(--secondary));
+        border: none;
+      }
+      #imagePreview img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 50%;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container py-5">
+      <div class="quiz-container mx-auto bg-white">
+        <!-- Quiz Header -->
+        <div class="quiz-header text-center p-4">
+          <h2 class="h4 mb-0">Skin Analysis Quiz</h2>
+          <small
+            >Answer 5 quick questions for personalized recommendations</small
+          >
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="progress rounded-0" style="height: 6px">
+          <div id="quizProgress" class="progress-bar" style="width: 0%"></div>
+        </div>
+
+        <!-- Quiz Form -->
+        <form id="skinQuiz" class="p-4">
+          <!-- Question 1 - Skin Type -->
+          <div class="question active" id="q1">
+            <h5 class="mb-4">1. What's your skin type?</h5>
+            <div class="row g-3">
+              <div class="col-6">
+                <div class="option-card text-center" data-value="oily">
+                  <img
+                    src="https://www.shutterstock.com/image-photo/closeup-girl-sweaty-skin-on-260nw-2374664395.jpg"
+                    class="option-img w-100"
+                  />
+                  <div class="p-2">
+                    <small class="fw-bold">Oily</small>
+                    <p class="mb-0 text-muted" style="font-size: 11px">
+                      Shiny, prone to acne
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="option-card text-center" data-value="dry">
+                  <img
+                    src="https://t3.ftcdn.net/jpg/05/21/31/34/360_F_521313465_r8NLN5ju9dTrIQSfntF83OJyhqhet7sf.jpg"
+                    class="option-img w-100"
+                  />
+                  <div class="p-2">
+                    <small class="fw-bold">Dry</small>
+                    <p class="mb-0 text-muted" style="font-size: 11px">
+                      Flaky, tight feeling
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="option-card text-center" data-value="combination">
+                  <img
+                    src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQVrmZrp2IgPj1DY3hqSHY_M0f2MfsRwqS35Q&s"
+                    class="option-img w-100"
+                  />
+                  <div class="p-2">
+                    <small class="fw-bold">Combination</small>
+                    <p class="mb-0 text-muted" style="font-size: 11px">
+                      Oily T-zone, dry cheeks
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="option-card text-center" data-value="normal">
+                  <img
+                    src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQoeTpJESI1gOWh2-KnS110Twoxvf_4JDUsWw&s"
+                    class="option-img w-100"
+                  />
+                  <div class="p-2">
+                    <small class="fw-bold">Normal</small>
+                    <p class="mb-0 text-muted" style="font-size: 11px">
+                      Balanced, few concerns
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <input type="hidden" name="skinType" id="skinType" />
+          </div>
+
+          <!-- Question 2 - Primary Concern -->
+          <div class="question" id="q2">
+            <h5 class="my-4">2. Your main skin concern?</h5>
+            <div class="row g-3">
+              <div class="col-6">
+                <div class="option-card text-center" data-value="acne">
+                  <img
+                    src="https://assets.clevelandclinic.org/transform/fc52e376-b64a-4bfe-a219-9fa3ecdd3c2a/acne-on-face-1326434308-770x533-1_jpg"
+                    class="option-img w-100"
+                  />
+                  <div class="p-2">
+                    <small class="fw-bold">Acne/Breakouts</small>
+                  </div>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="option-card text-center" data-value="pigmentation">
+                  <img
+                    src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRb5ngQK01xy7y9VpOyPcQTrC5Bqyy5_4QSoQ&s"
+                    class="option-img w-100"
+                  />
+                  <div class="p-2">
+                    <small class="fw-bold">Pigmentation</small>
+                  </div>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="option-card text-center" data-value="aging">
+                  <img
+                    src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR35ApUk0TVtd-weuxXFy6S96SHzuGfK9Ph6w&s"
+                    class="option-img w-100"
+                  />
+                  <div class="p-2">
+                    <small class="fw-bold">Aging/Wrinkles</small>
+                  </div>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="option-card text-center" data-value="sensitivity">
+                  <img
+                    src="https://t4.ftcdn.net/jpg/05/53/00/67/360_F_553006735_fFIC8i2mMGZnQl9RmjDzqkPKYLxxMS6g.jpg"
+                    class="option-img w-100"
+                  />
+                  <div class="p-2">
+                    <small class="fw-bold">Sensitivity</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <input type="hidden" name="concern" id="concern" />
+          </div>
+
+          <!-- Question 3 - Budget -->
+          <div class="question" id="q3">
+            <h5 class="my-4">3. Your monthly skincare budget?</h5>
+            <div class="row g-3">
+              <div class="col-6">
+                <div class="option-card text-center" data-value="500">
+                  <div class="p-4">
+                    <small class="fw-bold">Under ₹500</small>
+                  </div>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="option-card text-center" data-value="1000">
+                  <div class="p-4">
+                    <small class="fw-bold">₹500-₹1000</small>
+                  </div>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="option-card text-center" data-value="2000">
+                  <div class="p-4">
+                    <small class="fw-bold">₹1000-₹2000</small>
+                  </div>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="option-card text-center" data-value="2000+">
+                  <div class="p-4">
+                    <small class="fw-bold">₹2000+</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <input type="hidden" name="budget" id="budget" />
+          </div>
+
+          <!-- Question 4 - Environment -->
+          <div class="question" id="q4">
+            <h5 class="my-4">4. Your local environment?</h5>
+            <div class="row g-3">
+              <div class="col-6">
+                <div class="option-card text-center" data-value="humid">
+                  <div class="p-4">
+                    <small class="fw-bold">Humid</small>
+                    <p class="mb-0 text-muted" style="font-size: 11px">
+                      Mumbai, Chennai
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="option-card text-center" data-value="dry">
+                  <div class="p-4">
+                    <small class="fw-bold">Dry</small>
+                    <p class="mb-0 text-muted" style="font-size: 11px">
+                      Rajasthan, Delhi winters
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="option-card text-center" data-value="polluted">
+                  <div class="p-4">
+                    <small class="fw-bold">Polluted</small>
+                    <p class="mb-0 text-muted" style="font-size: 11px">
+                      Metro cities
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="option-card text-center" data-value="moderate">
+                  <div class="p-4">
+                    <small class="fw-bold">Moderate</small>
+                    <p class="mb-0 text-muted" style="font-size: 11px">
+                      Bangalore, hills
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <input type="hidden" name="environment" id="environment" />
+          </div>
+
+          <!-- Question 5 - Photo Analysis (Optional) -->
+          <div class="question" id="q5">
+            <h5 class="my-4">
+              5. (Optional) Upload a clear face photo for AI analysis
+            </h5>
+            <div class="text-center mb-4">
+              <div
+                id="imagePreview"
+                class="mx-auto mb-3"
+                style="
+                  width: 150px;
+                  height: 150px;
+                  border: 2px dashed #ddd;
+                  border-radius: 50%;
+                  background: #f8f9fa;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                "
+              >
+                <i class="fas fa-camera text-muted" style="font-size: 24px"></i>
+              </div>
+              <div
+                class="mb-3 justify-content-center align-items-center d-flex gap-2"
+              >
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-primary"
+                  data-bs-toggle="modal"
+                  data-bs-target="#cameraModal"
+                >
+                  <i class="fas fa-camera me-1"></i> Take Photo
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-secondary"
+                  onclick="document.getElementById('fileUpload').click()"
+                >
+                  <i class="fas fa-upload me-1"></i> Upload Photo
+                </button>
+                <input
+                  type="file"
+                  id="fileUpload"
+                  accept="image/*"
+                  style="display: none"
+                />
+              </div>
+            </div>
+            <div class="form-check form-switch mb-3">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                checked
+                id="useAI"
+              />
+              <label class="form-check-label" for="useAI"
+                >Enable AI skin analysis (beta)</label
+              >
+            </div>
+            <div class="alert alert-info small">
+              <i class="fas fa-info-circle me-2"></i> Our AI detects concerns
+              like acne, pigmentation, and texture. For best results, use
+              natural lighting.
+            </div>
+          </div>
+
+          <!-- Navigation Buttons -->
+          <div class="d-flex justify-content-between mt-4">
+            <button
+              type="button"
+              class="btn btn-outline-secondary"
+              id="prevBtn"
+              disabled
+            >
+              Back
+            </button>
+            <button type="button" class="btn btn-primary" id="nextBtn">
+              Next
+            </button>
+            <button
+              type="submit"
+              class="btn btn-primary"
+              id="submitBtn"
+              style="display: none"
+            >
+              Get My Results
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Camera Modal -->
+    <div class="modal fade" id="cameraModal" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Take a Photo</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+            ></button>
+          </div>
+          <div class="modal-body text-center">
+            <video id="cameraPreview" autoplay playsinline></video>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              Cancel
+            </button>
+            <button type="button" class="btn btn-primary" id="captureBtn">
+              Capture
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Font Awesome -->
+    <script
+      src="https://kit.fontawesome.com/a076d05399.js"
+      crossorigin="anonymous"
+    ></script>
+    <!-- Custom JS -->
+    <script>
+      // Quiz Navigation
+      let currentQuestion = 1;
+      const totalQuestions = 5;
+
+      document.getElementById("nextBtn").addEventListener("click", () => {
+        if (validateQuestion(currentQuestion)) {
+          document
+            .getElementById(`q${currentQuestion}`)
+            .classList.remove("active");
+          currentQuestion++;
+          updateProgress();
+
+          if (currentQuestion === totalQuestions) {
+            document.getElementById("nextBtn").style.display = "none";
+            document.getElementById("submitBtn").style.display = "block";
+          }
+
+          document
+            .getElementById(`q${currentQuestion}`)
+            .classList.add("active");
+          document.getElementById("prevBtn").disabled = false;
+        }
+      });
+
+      document.getElementById("prevBtn").addEventListener("click", () => {
+        document
+          .getElementById(`q${currentQuestion}`)
+          .classList.remove("active");
+        currentQuestion--;
+        updateProgress();
+        document.getElementById(`q${currentQuestion}`).classList.add("active");
+        document.getElementById("nextBtn").style.display = "block";
+        document.getElementById("submitBtn").style.display = "none";
+
+        if (currentQuestion === 1) {
+          document.getElementById("prevBtn").disabled = true;
+        }
+      });
+
+      function updateProgress() {
+        const progress = ((currentQuestion - 1) / (totalQuestions - 1)) * 100;
+        document.getElementById("quizProgress").style.width = `${progress}%`;
+      }
+
+      // Option Selection
+      document.querySelectorAll(".option-card").forEach((card) => {
+        card.addEventListener("click", function () {
+          // Remove selected class from siblings
+          this.parentElement.parentElement
+            .querySelectorAll(".option-card")
+            .forEach((el) => {
+              el.classList.remove("selected");
+            });
+
+          // Add to clicked card
+          this.classList.add("selected");
+
+          // Update hidden input
+          const inputId = this.closest(".question").querySelector(
+            'input[type="hidden"]'
+          ).id;
+          document.getElementById(inputId).value = this.dataset.value;
+        });
+      });
+
+      function validateQuestion(qNum) {
+        const currentQ = document.getElementById(`q${qNum}`);
+        const requiredInput = currentQ.querySelector('input[type="hidden"]');
+        return !!requiredInput.value;
+      }
+
+      // Camera Functionality
+      let stream = null;
+      document
+        .getElementById("cameraModal")
+        .addEventListener("shown.bs.modal", async () => {
+          try {
+            stream = await navigator.mediaDevices.getUserMedia({
+              video: {
+                facingMode: "user",
+                width: { ideal: 1280 },
+                height: { ideal: 720 },
+              },
+            });
+            const video = document.getElementById("cameraPreview");
+            video.srcObject = stream;
+            video.onloadedmetadata = () => {
+              video.play();
+            };
+          } catch (err) {
+            console.error("Camera error: ", err);
+            alert("Could not access camera. Please upload a photo instead.");
+          }
+        });
+
+      document
+        .getElementById("cameraModal")
+        .addEventListener("hidden.bs.modal", () => {
+          if (stream) {
+            stream.getTracks().forEach((track) => track.stop());
+          }
+        });
+
+      document.getElementById("captureBtn").addEventListener("click", () => {
+        const video = document.getElementById("cameraPreview");
+        const canvas = document.createElement("canvas");
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        canvas
+          .getContext("2d")
+          .drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        // Convert to blob and display preview
+        canvas.toBlob(
+          (blob) => {
+            const url = URL.createObjectURL(blob);
+            const imagePreview = document.getElementById("imagePreview");
+            imagePreview.innerHTML = `<img src="${url}" alt="Captured photo">`;
+
+            // Close modal
+            bootstrap.Modal.getInstance(
+              document.getElementById("cameraModal")
+            ).hide();
+          },
+          "image/jpeg",
+          0.8
+        );
+      });
+
+      // File Upload Handler
+      document
+        .getElementById("fileUpload")
+        .addEventListener("change", function (e) {
+          const file = e.target.files[0];
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = function (event) {
+              const imagePreview = document.getElementById("imagePreview");
+              imagePreview.innerHTML = `<img src="${event.target.result}" alt="Uploaded photo">`;
+            };
+            reader.readAsDataURL(file);
+          }
+        });
+
+      // Form Submission
+      document
+        .getElementById("skinQuiz")
+        .addEventListener("submit", function (e) {
+          e.preventDefault();
+
+          // Show loading state
+          const submitBtn = document.getElementById("submitBtn");
+          submitBtn.disabled = true;
+          submitBtn.innerHTML =
+            '<span class="spinner-border spinner-border-sm" role="status"></span> Processing...';
+
+          // Collect all form data
+          const formData = {
+            skinType: document.getElementById("skinType").value,
+            concern: document.getElementById("concern").value,
+            budget: document.getElementById("budget").value,
+            environment: document.getElementById("environment").value,
+            useAI: document.getElementById("useAI").checked,
+            skinImage: null,
+          };
+
+          // Get image data if available
+          const imagePreview = document
+            .getElementById("imagePreview")
+            .querySelector("img");
+          if (imagePreview && formData.useAI) {
+            formData.skinImage = imagePreview.src;
+          }
+
+          // Store data in sessionStorage
+          sessionStorage.setItem("glowGuideFormData", JSON.stringify(formData));
+
+          // Redirect to results page
+          window.location.href = "results.html";
+        });
+    </script>
+  </body>
+</html>

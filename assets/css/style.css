@@ -1,0 +1,13 @@
+:root {
+    --bs-primary: #6f42c1;
+    --bs-purple: #6f42c1;
+}
+
+.btn-primary {
+    background-color: var(--bs-purple);
+    border-color: var(--bs-purple);
+}
+
+.text-purple {
+    color: var(--bs-purple);
+}

@@ -1,0 +1,10 @@
+[
+    {
+        "id": 1,
+        "name": "Minimalist 5% Niacinamide Serum",
+        "price": 649,
+        "ingredients": ["Niacinamide 5%", "Zinc"],
+        "best_for": ["oily", "acne", "pigmentation"],
+        "affiliate_link": "https://nykaa.com/...?aff_id=123"
+    }
+]

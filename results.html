@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GlowGuide | Your Results</title>
+    <!-- Bootstrap 5 CSS -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <!-- Google Fonts -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <!-- Custom CSS -->
+    <style>
+      .processing-step {
+        opacity: 0.5;
+        transition: all 0.3s ease;
+      }
+      .processing-step.active {
+        opacity: 1;
+        transform: translateX(10px);
+      }
+      .dot-flashing {
+        display: inline-block;
+        position: relative;
+        width: 8px;
+        height: 8px;
+        border-radius: 5px;
+        background-color: #8a2be2;
+        color: #8a2be2;
+        animation: dotFlashing 1s infinite linear;
+      }
+      @keyframes dotFlashing {
+        0% {
+          opacity: 0.2;
+        }
+        50% {
+          opacity: 1;
+        }
+        100% {
+          opacity: 0.2;
+        }
+      }
+      .product-card {
+        transition: all 0.3s ease;
+      }
+      .product-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(138, 43, 226, 0.1);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container py-5">
+      <div class="quiz-container mx-auto bg-white">
+        <div class="quiz-header text-center p-4">
+          <h2 class="h4 mb-0">Analyzing Your Profile</h2>
+          <small>This may take 20-30 seconds</small>
+        </div>
+
+        <div class="p-4">
+          <div id="processingSteps">
+            <div class="processing-step mb-3" id="step1">
+              <span class="dot-flashing"></span>
+              Validating your inputs...
+            </div>
+            <div class="processing-step mb-3" id="step2">
+              <span class="dot-flashing"></span>
+              Analyzing skin image (if provided)...
+            </div>
+            <div class="processing-step mb-3" id="step3">
+              <span class="dot-flashing"></span>
+              Consulting with dermatology AI...
+            </div>
+            <div class="processing-step mb-3" id="step4">
+              <span class="dot-flashing"></span>
+              Curating personalized recommendations...
+            </div>
+          </div>
+
+          <div id="results" class="row g-4 mt-4 d-none">
+            <!-- Product cards will be inserted here -->
+          </div>
+
+          <div id="errorAlert" class="alert alert-danger d-none mt-4"></div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Configuration - Replace with your actual API key
+      const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+      const API_URL = "https://api.openai.com/v1/chat/completions";
+
+      // Track image analysis count
+      let imageAnalysisCount = localStorage.getItem("imageAnalysisCount") || 0;
+
+      document.addEventListener("DOMContentLoaded", async () => {
+        try {
+          // Step 1: Validate inputs
+          activateStep("step1");
+
+          // Get form data from session storage
+          const formData = JSON.parse(
+            sessionStorage.getItem("glowGuideFormData")
+          );
+          console.log("Form Data:", formData);
+          if (!formData || !formData.skinType || !formData.concern) {
+            throw new Error("Invalid quiz data - please start over");
+          }
+
+          // Step 2: Analyze image if provided and enabled
+          activateStep("step2");
+          let skinAnalysis = null;
+
+          if (formData.useAI && formData.skinImage) {
+            try {
+              if (imageAnalysisCount >= 5) {
+                showMessage(
+                  "Daily image analysis limit reached - using standard recommendations"
+                );
+              } else {
+                skinAnalysis = await analyzeSkinImage(formData.skinImage);
+                imageAnalysisCount++;
+                localStorage.setItem("imageAnalysisCount", imageAnalysisCount);
+              }
+            } catch (imageError) {
+              console.error("Image analysis error:", imageError);
+              showMessage(
+                "Image analysis unavailable - continuing with standard recommendations"
+              );
+            }
+          }
+
+          // Step 3: Simulate AI processing
+          activateStep("step3");
+          await new Promise((resolve) => setTimeout(resolve, 2000));
+
+          // Step 4: Fetch recommendations
+          activateStep("step4");
+
+          // Prepare user profile for recommendations
+          const userProfile = {
+            skinType: formData.skinType,
+            primaryConcern: formData.concern,
+            budget: formData.budget,
+            environment: formData.environment,
+            skinImage: skinAnalysis ? JSON.stringify(skinAnalysis) : null,
+          };
+
+          const recommendations = await fetchProductRecommendations(
+            userProfile
+          );
+
+          // Show results
+          document.getElementById("processingSteps").classList.add("d-none");
+          renderProducts(recommendations.products);
+        } catch (err) {
+          console.error("Processing error:", err);
+          showError(err.message);
+        }
+      });
+
+      // Updated analyzeSkinImage function with better error handling
+      async function analyzeSkinImage(imageDataUrl) {
+        try {
+          // Check if the image data is valid
+          if (!imageDataUrl.startsWith("data:image")) {
+            throw new Error("Invalid image format");
+          }
+
+          const response = await fetch(API_URL, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${OPENAI_API_KEY}`,
+            },
+            body: JSON.stringify({
+              model: "gpt-4o",
+              messages: [
+                {
+                  role: "user",
+                  content: [
+                    {
+                      type: "text",
+                      text: `Analyze this skin image for skin type, concerns, texture, and redness. Return JSON format.`,
+                    },
+                    {
+                      type: "image_url",
+                      image_url: {
+                        url: imageDataUrl,
+                      },
+                    },
+                  ],
+                },
+              ],
+              max_tokens: 300,
+            }),
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error?.message || "API request failed");
+          }
+
+          const data = await response.json();
+          if (!data.choices?.[0]?.message?.content) {
+            throw new Error("Invalid response format from API");
+          }
+
+          return JSON.parse(data.choices[0].message.content);
+          console.log(
+            "Image analysis result:",
+            data.choices[0].message.content
+          );
+        } catch (error) {
+          console.error("Image analysis failed:", error);
+          throw new Error("Could not analyze image. Please try again later.");
+        }
+      }
+
+      // Updated fetchProductRecommendations with better error handling
+      async function fetchProductRecommendations(userProfile) {
+        try {
+          const systemInstructions = `You are an expert dermatologist assistant specializing in Indian skincare. 
+Recommend products available in India based on the user's profile.`;
+
+          const prompt = `
+User Profile:
+- Skin Type: ${userProfile.skinType}
+- Main Concern: ${userProfile.primaryConcern}
+- Budget: ₹${userProfile.budget}
+- Environment: ${userProfile.environment}
+${userProfile.skinImage ? "- Skin Analysis: " + userProfile.skinImage : ""}
+
+Please recommend suitable skincare products in this JSON format:
+{
+    "products": [{
+        "name": "Product Name (Brand)",
+        "description": "Brief benefits",
+        "price": "₹XXX",
+        "keyIngredients": ["ing1", "ing2"],
+        "affiliateLink": "URL",
+        "whyMatch": "Brief explanation"
+    }]
+}`.trim();
+
+          const response = await fetch(API_URL, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${OPENAI_API_KEY}`,
+            },
+            body: JSON.stringify({
+              model: "gpt-4o",
+              messages: [
+                { role: "system", content: systemInstructions },
+                { role: "user", content: prompt },
+              ],
+              temperature: 0.3,
+              max_tokens: 1500,
+              response_format: { type: "json_object" },
+            }),
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error?.message || "API request failed");
+          }
+
+          const data = await response.json();
+          const content = data.choices[0].message.content;
+          console.log("API Response:", content);
+
+          // Basic validation
+          if (!content) throw new Error("Empty response from API");
+
+          const parsed = JSON.parse(content);
+          if (!parsed.products || !Array.isArray(parsed.products)) {
+            throw new Error("Invalid product data format");
+          }
+
+          // Filter by budget
+          const budget = parseInt(userProfile.budget) || 1000;
+          const filteredProducts = parsed.products.filter((product) => {
+            try {
+              const productPrice = parseInt(
+                product.price?.replace(/[^0-9]/g, "") || "1000"
+              );
+              return productPrice <= budget;
+            } catch {
+              return true; // Include product if price parsing fails
+            }
+          });
+
+          return { products: filteredProducts };
+        } catch (error) {
+          console.error("Recommendation error:", error);
+          throw new Error(
+            "Could not generate recommendations. Please try again."
+          );
+        }
+      }
+
+      // UI Functions
+      function activateStep(stepId) {
+        document.querySelectorAll(".processing-step").forEach((step) => {
+          step.classList.remove("active");
+        });
+        document.getElementById(stepId).classList.add("active");
+      }
+
+      function renderProducts(products) {
+        const container = document.getElementById("results");
+        container.classList.remove("d-none");
+
+        container.innerHTML = products
+          .map(
+            (product) => `
+                <div class="col-md-6">
+                    <div class="card product-card h-100 border-0 shadow-sm">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <h5 class="card-title">${product.name}</h5>
+                                <span class="text-primary">${
+                                  product.price
+                                }</span>
+                            </div>
+                            <p class="text-muted small">${
+                              product.description
+                            }</p>
+                            <div class="mt-2">
+                                <small class="text-muted">Key ingredients: ${product.keyIngredients.join(
+                                  ", "
+                                )}</small>
+                            </div>
+                            <a href="${
+                              product.affiliateLink
+                            }" target="_blank" class="btn btn-primary mt-3 w-100">
+                                Buy Now on ${product.source || "Our Partner"}
+                            </a>
+                            ${
+                              product.whyMatch
+                                ? `<p class="text-info small mt-2">${product.whyMatch}</p>`
+                                : ""
+                            }
+                        </div>
+                    </div>
+                </div>
+            `
+          )
+          .join("");
+      }
+
+      function showError(message) {
+        document.getElementById("processingSteps").classList.add("d-none");
+        const alert = document.getElementById("errorAlert");
+        alert.classList.remove("d-none");
+        alert.textContent = message;
+      }
+
+      function showMessage(message) {
+        const alert = document.createElement("div");
+        alert.className = "alert alert-info mt-3";
+        alert.textContent = message;
+        document.querySelector(".quiz-container .p-4").appendChild(alert);
+      }
+    </script>
+  </body>
+</html>
