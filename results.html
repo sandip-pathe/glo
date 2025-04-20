@@ -331,42 +331,16 @@
             `Your skin type is <strong>${formData.skinType}</strong> with primary concern <strong>${formData.concern}</strong>.`
           );
 
-          // Step 2: Analyze image if provided
+          // Step 2: Analyze image if provided (now independent of main flow)
           let skinAnalysis = null;
           if (formData.useAI && formData.skinImage) {
-            await activateStep(
-              2,
-              `Analyzing your skin photo for concerns like acne, pigmentation, and texture...`
-            );
-
-            try {
-              const response = await fetch(
-                "/.netlify/functions/analyzeSkinImage",
-                {
-                  method: "POST",
-                  headers: {
-                    "Content-Type": "application/json",
-                  },
-                  body: JSON.stringify({ skinImage: formData.skinImage }),
-                }
-              );
-
-              if (!response.ok) throw new Error("Failed to analyze image");
-
-              skinAnalysis = await response.json();
-              await updateStepDetail(
-                2,
-                `Analysis complete: Detected ${skinAnalysis.primaryConcerns.join(
-                  ", "
-                )}`
-              );
-            } catch (imageError) {
-              console.error("Image analysis error:", imageError);
-              await updateStepDetail(
+            analyzeImage(formData.skinImage).catch((error) => {
+              console.error("Image analysis failed:", error);
+              updateStepDetail(
                 2,
                 "Image analysis unavailable - continuing with standard recommendations"
               );
-            }
+            });
           } else {
             await updateStepDetail(
               2,
@@ -396,7 +370,7 @@
             `Finding products within ₹${formData.budget} budget that target ${formData.concern}...`
           );
 
-          // Get product recommendations from your API
+          // Get product recommendations
           const userProfile = {
             skinType: formData.skinType,
             primaryConcern: formData.concern,
@@ -405,33 +379,25 @@
             skinImage: skinAnalysis ? JSON.stringify(skinAnalysis) : null,
           };
 
-          const recommendationsResponse = await fetch(
-            "/.netlify/functions/fetchProductRecommendations",
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({ userProfile }),
-            }
-          );
+          try {
+            const result = await fetchProductRecommendations(userProfile);
+            await updateStepDetail(
+              4,
+              `Found ${result.products.length} perfect matches for your skin`
+            );
 
-          if (!recommendationsResponse.ok) {
-            throw new Error("Failed to fetch recommendations");
+            // Complete all steps
+            completeAllSteps();
+
+            // Show results
+            await new Promise((resolve) => setTimeout(resolve, 500));
+            showResults(formData, result.products);
+          } catch (error) {
+            console.error("Recommendations error:", error);
+            throw new Error(
+              "Failed to load recommendations. Please try again."
+            );
           }
-
-          const result = await recommendationsResponse.json();
-          await updateStepDetail(
-            4,
-            `Found ${result.products.length} perfect matches for your skin`
-          );
-
-          // Complete all steps
-          completeAllSteps();
-
-          // Show results
-          await new Promise((resolve) => setTimeout(resolve, 500));
-          showResults(formData, result.products);
         } catch (err) {
           console.error("Processing error:", err);
           showError(
@@ -439,6 +405,112 @@
           );
         }
       });
+
+      // Independent image analysis function
+      async function analyzeImage(skinImage) {
+        await activateStep(
+          2,
+          `Analyzing your skin photo for concerns like acne, pigmentation, and texture...`
+        );
+
+        const response = await fetch("/.netlify/functions/analyzeSkinImage", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ skinImage }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to analyze image");
+        }
+
+        const skinAnalysis = await response.json();
+        await updateStepDetail(
+          2,
+          `Analysis complete: Detected ${skinAnalysis.primaryConcerns.join(
+            ", "
+          )}`
+        );
+        return skinAnalysis;
+      }
+
+      // Independent product recommendations function
+      async function fetchProductRecommendations(userProfile) {
+        const response = await fetch(
+          "/.netlify/functions/fetchProductRecommendations",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ userProfile }),
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch recommendations");
+        }
+
+        return await response.json();
+      }
+
+      // Improved results display
+      function showResults(formData, products) {
+        document.querySelector(".processing-container").classList.add("d-none");
+        const resultsContainer = document.getElementById("resultsState");
+        resultsContainer.classList.remove("d-none");
+
+        // Display skin tags
+        const skinTagsContainer = document.getElementById("skinTags");
+        skinTagsContainer.innerHTML = `
+          <span class="skin-tag type">${formData.skinType} Skin</span>
+          <span class="skin-tag concern">${formData.concern}</span>
+          <span class="skin-tag environment">${formData.environment} Climate</span>
+          <span class="skin-tag budget">₹${formData.budget} Budget</span>
+        `;
+
+        // Display products
+        const resultsGrid = document.getElementById("results");
+        resultsGrid.innerHTML = products
+          .map(
+            (product) => `
+            <div class="col-md-6 col-lg-4 col-xl-3">
+              <div class="card product-card h-100">
+                <div class="position-relative">
+                  <img src="https://via.placeholder.com/300x200?text=${encodeURIComponent(
+                    product.name
+                  )}" class="card-img-top product-image" alt="${product.name}">
+                  <span class="product-badge">Best Match</span>
+                </div>
+                <div class="card-body">
+                  <h5 class="card-title">${product.name}</h5>
+                  <p class="card-text text-muted">${product.description}</p>
+                  <div class="mb-2">
+                    ${product.keyIngredients
+                      .map(
+                        (ing) => `<span class="ingredient-tag">${ing}</span>`
+                      )
+                      .join("")}
+                  </div>
+                  <p class="product-price">${product.price}</p>
+                </div>
+                <div class="card-footer bg-transparent">
+                  <a href="${
+                    product.affiliateLink
+                  }" class="btn btn-sm btn-primary w-100" target="_blank">Buy Now</a>
+                </div>
+                <div class="product-why mt-2">
+                  <small class="text-muted"><strong>Why we recommend:</strong> ${
+                    product.whyMatch
+                  }</small>
+                </div>
+              </div>
+            </div>
+          `
+          )
+          .join("");
+      }
 
       // Helper functions
       async function activateStep(stepNumber, detail) {
