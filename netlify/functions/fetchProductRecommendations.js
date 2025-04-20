@@ -2,6 +2,19 @@ export async function handler(event) {
   try {
     const { userProfile } = JSON.parse(event.body || "{}");
 
+    console.log("Received user profile:", userProfile);
+
+    const API_URL = "https://api.openai.com/v1/chat/completions";
+
+    const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+
+    if (!OPENAI_API_KEY) {
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ error: "API key is not set" }),
+      };
+    }
+
     // Better validation
     if (!userProfile || typeof userProfile !== "object") {
       return {
