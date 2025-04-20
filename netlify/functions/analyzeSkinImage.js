@@ -1,20 +1,38 @@
 export async function handler(event) {
-  const { skinImage } = JSON.parse(event.body || "{}");
-  console.log("Received image data:", skinImage);
-
-  const API_URL = "https://api.openai.com/v1/chat/completions";
-
-  const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-
   try {
+    // Parse and validate input
+    const { skinImage } = JSON.parse(event.body || "{}");
+
     if (!skinImage || !skinImage.startsWith("data:image")) {
-      throw new Error("Invalid image format");
+      return {
+        statusCode: 400,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        },
+        body: JSON.stringify({
+          error: "Invalid image format. Please provide a valid image.",
+        }),
+      };
     }
+
+    console.log("Received image data");
+
+    const API_URL = "https://api.openai.com/v1/chat/completions";
+    const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
     if (!OPENAI_API_KEY) {
-      throw new Error("API key is not set");
+      return {
+        statusCode: 500,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        },
+        body: JSON.stringify({ error: "API key is not set" }),
+      };
     }
 
+    // Call OpenAI API
     const response = await fetch(API_URL, {
       method: "POST",
       headers: {
@@ -25,11 +43,32 @@ export async function handler(event) {
         model: "gpt-4o",
         messages: [
           {
+            role: "system",
+            content:
+              "Analyze the skin image and return JSON with skin type, concerns, and recommendations.",
+          },
+          {
             role: "user",
             content: [
               {
                 type: "text",
-                text: `Analyze this skin image for skin type, concerns, texture, and redness. Return JSON format.`,
+                text: `Analyze this skin image and return JSON with:
+                - skinType (oily, dry, combination, normal)
+                - primaryConcerns (array)
+                - textureAnalysis
+                - rednessLevel (none, mild, moderate, severe)
+                - generalRecommendations (array)
+                
+                Format:
+                {
+                  "analysis": {
+                    "skinType": "",
+                    "primaryConcerns": [],
+                    "textureAnalysis": "",
+                    "rednessLevel": "",
+                    "generalRecommendations": []
+                  }
+                }`,
               },
               {
                 type: "image_url",
@@ -40,7 +79,8 @@ export async function handler(event) {
             ],
           },
         ],
-        max_tokens: 300,
+        response_format: { type: "json_object" },
+        max_tokens: 500,
       }),
     });
 
@@ -50,14 +90,43 @@ export async function handler(event) {
     }
 
     const data = await response.json();
-    if (!data.choices?.[0]?.message?.content) {
-      throw new Error("Invalid response format from API");
+    const content = data.choices[0]?.message?.content;
+
+    if (!content) {
+      throw new Error("Empty response from API");
     }
 
-    console.log("Image analysis result:", data.choices[0].message.content);
-    return JSON.parse(data.choices[0].message.content);
+    // Parse and validate response
+    let parsed;
+    try {
+      parsed = JSON.parse(content);
+    } catch (e) {
+      throw new Error("Invalid JSON response from API");
+    }
+
+    if (!parsed.analysis) {
+      throw new Error("Invalid analysis data format");
+    }
+
+    return {
+      statusCode: 200,
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+      },
+      body: JSON.stringify(parsed),
+    };
   } catch (error) {
     console.error("Image analysis failed:", error);
-    throw new Error("Could not analyze image. Please try again later.");
+    return {
+      statusCode: 500,
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+      },
+      body: JSON.stringify({
+        error: error.message || "Could not analyze image",
+      }),
+    };
   }
 }
