@@ -1,10 +1,15 @@
 export async function handler(event) {
   const { imageDataUrl } = JSON.parse(event.body || "{}");
+
+  // Log the image data URL for debugging
+  console.log("Received image data:", imageDataUrl);
+
   const API_URL = "https://api.openai.com/v1/chat/completions";
   const apiKey = process.env.OPENAI_API_KEY;
+
   try {
     // Check if the image data is valid
-    if (!imageDataUrl.startsWith("data:image")) {
+    if (!imageDataUrl || !imageDataUrl.startsWith("data:image")) {
       throw new Error("Invalid image format");
     }
 

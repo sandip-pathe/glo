@@ -1,7 +1,9 @@
 export async function handler(event) {
   const { userProfile } = JSON.parse(event.body || "{}");
+
   const API_URL = "https://api.openai.com/v1/chat/completions";
   const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+
   if (!OPENAI_API_KEY) {
     throw new Error(
       "API key is not set. Please check your environment variables."

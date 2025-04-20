@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>GlowGuide | Your Results</title>
+    <title>GlowGuide | Your Personalized Results</title>
     <!-- Bootstrap 5 CSS -->
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
@@ -11,145 +11,392 @@
     />
     <!-- Google Fonts -->
     <link
-      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
       rel="stylesheet"
+    />
+    <!-- Font Awesome -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
     />
     <!-- Custom CSS -->
     <style>
+      :root {
+        --primary: #8a2be2;
+        --secondary: #ff6b6b;
+        --light-bg: #f9f5ff;
+        --dark-text: #2d3748;
+        --gray-text: #718096;
+      }
+
+      body {
+        font-family: "Poppins", sans-serif;
+        background-color: var(--light-bg);
+        color: var(--dark-text);
+      }
+
+      .processing-container {
+        padding: 2rem;
+        font-family: "Poppins", sans-serif;
+      }
+
       .processing-step {
-        opacity: 0.5;
-        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        color: #4a5568;
       }
-      .processing-step.active {
-        opacity: 1;
-        transform: translateX(10px);
-      }
-      .dot-flashing {
-        display: inline-block;
+
+      .step-dot {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        margin-right: 1rem;
         position: relative;
-        width: 8px;
-        height: 8px;
-        border-radius: 5px;
-        background-color: #8a2be2;
-        color: #8a2be2;
-        animation: dotFlashing 1s infinite linear;
       }
-      @keyframes dotFlashing {
+
+      .step-dot::after {
+        content: "";
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        border: 2px solid transparent;
+      }
+
+      .step-dot.active {
+        background: var(--active-color);
+        animation: pulse 1.5s infinite;
+      }
+
+      .step-dot.completed {
+        background: var(--completed-color);
+      }
+
+      .step-dot.active::after {
+        border-color: var(--active-color);
+        animation: ring 1.5s infinite;
+      }
+
+      .step-content {
+        flex-grow: 1;
+      }
+
+      .step-title {
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+      }
+
+      .step-detail {
+        font-size: 0.875rem;
+        color: #718096;
+      }
+
+      @keyframes pulse {
         0% {
-          opacity: 0.2;
+          transform: scale(0.95);
         }
         50% {
+          transform: scale(1.05);
+        }
+        100% {
+          transform: scale(0.95);
+        }
+      }
+
+      @keyframes ring {
+        0% {
+          transform: scale(1);
           opacity: 1;
         }
         100% {
-          opacity: 0.2;
+          transform: scale(1.5);
+          opacity: 0;
         }
       }
       .product-card {
         transition: all 0.3s ease;
+        border-radius: 12px;
+        overflow: hidden;
+        border: none;
       }
+
       .product-card:hover {
         transform: translateY(-5px);
-        box-shadow: 0 10px 20px rgba(138, 43, 226, 0.1);
+        box-shadow: 0 15px 30px rgba(138, 43, 226, 0.15);
+      }
+
+      .product-image {
+        height: 200px;
+        object-fit: cover;
+        background-color: #f8f9fa;
+      }
+
+      .product-badge {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background-color: var(--primary);
+        color: white;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        font-weight: 600;
+      }
+
+      .product-price {
+        font-weight: 700;
+        color: var(--primary);
+      }
+
+      .product-why {
+        background-color: rgba(138, 43, 226, 0.05);
+        border-left: 3px solid var(--primary);
+        padding: 0.75rem;
+        border-radius: 0 4px 4px 0;
+        font-size: 0.9rem;
+      }
+
+      .ingredient-tag {
+        display: inline-block;
+        background-color: #e2e8f0;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        margin-right: 0.5rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .results-header {
+        background: linear-gradient(45deg, var(--primary), var(--secondary));
+        color: white;
+        padding: 2rem;
+        border-radius: 0 0 16px 16px;
+        margin-bottom: 2rem;
+      }
+
+      .skin-summary {
+        background-color: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+      }
+
+      .skin-tag {
+        display: inline-block;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-weight: 600;
+        margin-right: 0.5rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .skin-tag.type {
+        background-color: rgba(138, 43, 226, 0.1);
+        color: var(--primary);
+      }
+
+      .skin-tag.concern {
+        background-color: rgba(255, 107, 107, 0.1);
+        color: #ff6b6b;
+      }
+
+      .skin-tag.environment {
+        background-color: rgba(74, 222, 128, 0.1);
+        color: #4ade80;
+      }
+
+      .skin-tag.budget {
+        background-color: rgba(251, 191, 36, 0.1);
+        color: #fbbf24;
+      }
+
+      .loading-spinner {
+        width: 2rem;
+        height: 2rem;
+        border-width: 0.2em;
       }
     </style>
   </head>
   <body>
     <div class="container py-5">
-      <div class="quiz-container mx-auto bg-white">
-        <div class="quiz-header text-center p-4">
-          <h2 class="h4 mb-0">Analyzing Your Profile</h2>
-          <small>This may take 20-30 seconds</small>
+      <div class="header">
+        <h2>Analyzing Your Skin Profile</h2>
+        <p>We're curating personalized recommendations just for you</p>
+      </div>
+
+      <!-- Loading State -->
+      <div class="processing-container">
+        <div class="processing-step" id="step1">
+          <div class="step-dot active"></div>
+          <div class="step-content">
+            <div class="step-title">Validating inputs</div>
+            <div class="step-detail" id="step1Detail">
+              Verifying skin type and concerns
+            </div>
+          </div>
+        </div>
+
+        <div class="processing-step" id="step2">
+          <div class="step-dot"></div>
+          <div class="step-content">
+            <div class="step-title">Image analysis</div>
+            <div class="step-detail" id="step2Detail">
+              Initializing dermal assessment
+            </div>
+          </div>
+        </div>
+
+        <div class="processing-step" id="step3">
+          <div class="step-dot"></div>
+          <div class="step-content">
+            <div class="step-title">AI consultation</div>
+            <div class="step-detail" id="step3Detail">
+              Connecting neural networks
+            </div>
+          </div>
+        </div>
+
+        <div class="processing-step" id="step4">
+          <div class="step-dot"></div>
+          <div class="step-content">
+            <div class="step-title">Recommendations</div>
+            <div class="step-detail" id="step4Detail">
+              Synthesizing optimal solutions
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Results State -->
+      <div id="resultsState" class="d-none">
+        <div class="results-header text-center">
+          <h2 class="h4 mb-2">Your Personalized Skincare Routine</h2>
+          <p class="mb-0">Curated based on your skin profile and concerns</p>
         </div>
 
         <div class="p-4">
-          <div id="processingSteps">
-            <div class="processing-step mb-3" id="step1">
-              <span class="dot-flashing"></span>
-              Validating your inputs...
-            </div>
-            <div class="processing-step mb-3" id="step2">
-              <span class="dot-flashing"></span>
-              Analyzing skin image (if provided)...
-            </div>
-            <div class="processing-step mb-3" id="step3">
-              <span class="dot-flashing"></span>
-              Consulting with dermatology AI...
-            </div>
-            <div class="processing-step mb-3" id="step4">
-              <span class="dot-flashing"></span>
-              Curating personalized recommendations...
-            </div>
+          <div class="skin-summary">
+            <h5 class="mb-3">Your Skin Profile</h5>
+            <div id="skinTags"></div>
           </div>
 
-          <div id="results" class="row g-4 mt-4 d-none">
-            <!-- Product cards will be inserted here -->
-          </div>
+          <h5 class="mb-3">Recommended Products</h5>
+          <div id="results" class="row g-4"></div>
 
-          <div id="errorAlert" class="alert alert-danger d-none mt-4"></div>
+          <div class="mt-4 text-center">
+            <button
+              class="btn btn-primary"
+              onclick="window.location.href='quiz.html'"
+            >
+              <i class="fas fa-redo me-2"></i> Retake Quiz
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Error State -->
+      <div id="errorState" class="d-none">
+        <div class="quiz-header text-center">
+          <h2 class="h4 mb-2">Oops! Something went wrong</h2>
+        </div>
+
+        <div class="p-4 text-center">
+          <div class="alert alert-danger" id="errorAlert"></div>
+          <button
+            class="btn btn-primary"
+            onclick="window.location.href='quiz.html'"
+          >
+            <i class="fas fa-redo me-2"></i> Try Again
+          </button>
         </div>
       </div>
     </div>
 
     <script>
-      let imageAnalysisCount = parseInt(
-        localStorage.getItem("imageAnalysisCount") || "0"
-      );
-
       document.addEventListener("DOMContentLoaded", async () => {
         try {
-          activateStep("step1");
-
+          // Get form data from session storage
           const formData = JSON.parse(
             sessionStorage.getItem("glowGuideFormData")
           );
-          console.log("Form Data:", formData);
-
           if (!formData || !formData.skinType || !formData.concern) {
             throw new Error("Invalid quiz data - please start over");
           }
 
-          activateStep("step2");
+          // Step 1: Validate inputs
+          await activateStep(
+            1,
+            `Your skin type is <strong>${formData.skinType}</strong> with primary concern <strong>${formData.concern}</strong>.`
+          );
+
+          // Step 2: Analyze image if provided
           let skinAnalysis = null;
-
           if (formData.useAI && formData.skinImage) {
+            await activateStep(
+              2,
+              `Analyzing your skin photo for concerns like acne, pigmentation, and texture...`
+            );
+
             try {
-              if (imageAnalysisCount >= 5) {
-                showMessage(
-                  "Daily image analysis limit reached - using standard recommendations"
-                );
-              } else {
-                const response = await fetch(
-                  "/.netlify/functions/analyzeSkinImage",
-                  {
-                    method: "POST",
-                    headers: {
-                      "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({ skinImage: formData.skinImage }),
-                  }
-                );
+              const response = await fetch(
+                "/.netlify/functions/analyzeSkinImage",
+                {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({ skinImage: formData.skinImage }),
+                }
+              );
 
-                if (!response.ok) throw new Error("Failed to analyze image");
+              if (!response.ok) throw new Error("Failed to analyze image");
 
-                skinAnalysis = await response.json();
-                console.log("Skin Analysis:", skinAnalysis);
-                imageAnalysisCount++;
-                localStorage.setItem("imageAnalysisCount", imageAnalysisCount);
-              }
+              skinAnalysis = await response.json();
+              await updateStepDetail(
+                2,
+                `Analysis complete: Detected ${skinAnalysis.primaryConcerns.join(
+                  ", "
+                )}`
+              );
             } catch (imageError) {
               console.error("Image analysis error:", imageError);
-              showMessage(
+              await updateStepDetail(
+                2,
                 "Image analysis unavailable - continuing with standard recommendations"
               );
             }
+          } else {
+            await updateStepDetail(
+              2,
+              "No image provided - using standard recommendations"
+            );
           }
 
-          activateStep("step3");
-          await new Promise((resolve) => setTimeout(resolve, 2000));
+          // Step 3: AI consultation
+          await activateStep(
+            3,
+            `Consulting dermatology AI for ${formData.skinType} skin with ${formData.concern} in ${formData.environment} environment...`
+          );
 
-          activateStep("step4");
+          // Simulate AI processing
+          await new Promise((resolve) => setTimeout(resolve, 1500));
+          await updateStepDetail(
+            3,
+            `AI recommends focusing on ${getFocusArea(
+              formData.skinType,
+              formData.concern
+            )}`
+          );
 
+          // Step 4: Curate recommendations
+          await activateStep(
+            4,
+            `Finding products within ₹${formData.budget} budget that target ${formData.concern}...`
+          );
+
+          // Get product recommendations from your API
           const userProfile = {
             skinType: formData.skinType,
             primaryConcern: formData.concern,
@@ -169,83 +416,116 @@
             }
           );
 
-          if (!recommendationsResponse.ok)
+          if (!recommendationsResponse.ok) {
             throw new Error("Failed to fetch recommendations");
+          }
 
           const result = await recommendationsResponse.json();
-          console.log("Product Recommendations:", result);
+          await updateStepDetail(
+            4,
+            `Found ${result.products.length} perfect matches for your skin`
+          );
 
-          document.getElementById("processingSteps").classList.add("d-none");
+          // Complete all steps
+          completeAllSteps();
 
-          // Fix: `result.products` instead of `recommendations.products`
-          renderProducts(result.products);
+          // Show results
+          await new Promise((resolve) => setTimeout(resolve, 500));
+          showResults(formData, result.products);
         } catch (err) {
           console.error("Processing error:", err);
-          showError(err.message || "Something went wrong!");
+          showError(
+            err.message || "Something went wrong while processing your results"
+          );
         }
       });
 
-      function activateStep(stepId) {
-        document.querySelectorAll(".processing-step").forEach((step) => {
-          step.classList.remove("active");
-        });
-        document.getElementById(stepId).classList.add("active");
+      // Helper functions
+      async function activateStep(stepNumber, detail) {
+        const step = document.getElementById(`step${stepNumber}`);
+        const dot = step.querySelector(".step-dot");
+        dot.classList.add("active");
+
+        if (detail) {
+          await updateStepDetail(stepNumber, detail);
+        }
+        await new Promise((resolve) => setTimeout(resolve, 1000));
       }
 
-      function renderProducts(products) {
-        const container = document.getElementById("results");
-        container.classList.remove("d-none");
+      async function updateStepDetail(stepNumber, detail) {
+        const detailElement = document.getElementById(
+          `step${stepNumber}Detail`
+        );
+        detailElement.innerHTML = detail;
+        await new Promise((resolve) => setTimeout(resolve, 300));
+      }
 
-        container.innerHTML = products
-          .map(
-            (product) => `
-                <div class="col-md-6">
-                    <div class="card product-card h-100 border-0 shadow-sm">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between">
-                                <h5 class="card-title">${product.name}</h5>
-                                <span class="text-primary">${
-                                  product.price
-                                }</span>
-                            </div>
-                            <p class="text-muted small">${
-                              product.description
-                            }</p>
-                            <div class="mt-2">
-                                <small class="text-muted">Key ingredients: ${product.keyIngredients.join(
-                                  ", "
-                                )}</small>
-                            </div>
-                            <a href="${
-                              product.affiliateLink
-                            }" target="_blank" class="btn btn-primary mt-3 w-100">
-                                Buy Now on ${product.source || "Our Partner"}
-                            </a>
-                            ${
-                              product.whyMatch
-                                ? `<p class="text-info small mt-2">${product.whyMatch}</p>`
-                                : ""
-                            }
-                        </div>
-                    </div>
-                </div>
-            `
-          )
-          .join("");
+      function completeAllSteps() {
+        document.querySelectorAll(".processing-step").forEach((step) => {
+          const dot = step.querySelector(".step-dot");
+          dot.classList.remove("active");
+          dot.classList.add("completed");
+        });
+      }
+
+      function showResults(formData, products) {
+        document.querySelector(".processing-container").style.display = "none";
+        const resultsContainer = document.getElementById("resultsState");
+        resultsContainer.style.display = "block";
+
+        resultsContainer.innerHTML = `
+          <h3>Your Personalized Skincare Recommendations</h3>
+          <p>Based on your ${formData.skinType} skin with ${
+          formData.concern
+        } concerns in ${formData.environment} environment</p>
+          <ul>
+            ${products
+              .map(
+                (product) =>
+                  `<li><strong>${product.name}</strong> (${product.price}) - ${product.whyMatch}</li>`
+              )
+              .join("")}
+          </ul>
+          <button class="btn-retry" onclick="window.location.href='quiz.html'">
+            <i class="fas fa-redo me-2"></i> Retake Quiz
+          </button>
+        `;
       }
 
       function showError(message) {
-        document.getElementById("processingSteps").classList.add("d-none");
-        const alert = document.getElementById("errorAlert");
-        alert.classList.remove("d-none");
-        alert.textContent = message;
+        document.querySelector(".processing-container").style.display = "none";
+        document.getElementById("errorState").style.display = "block";
+        document.getElementById("errorAlert").textContent = message;
       }
 
-      function showMessage(message) {
-        const alert = document.createElement("div");
-        alert.className = "alert alert-info mt-3";
-        alert.textContent = message;
-        document.querySelector(".quiz-container .p-4").appendChild(alert);
+      function getFocusArea(skinType, concern) {
+        const focusAreas = {
+          oily: {
+            acne: "oil control and acne treatment",
+            pigmentation: "oil control with brightening",
+            aging: "lightweight anti-aging",
+            sensitivity: "gentle oil regulation",
+          },
+          dry: {
+            acne: "hydrating acne treatment",
+            pigmentation: "moisturizing brighteners",
+            aging: "rich anti-aging",
+            sensitivity: "soothing hydration",
+          },
+          combination: {
+            acne: "balanced acne treatment",
+            pigmentation: "even toning",
+            aging: "targeted anti-aging",
+            sensitivity: "zone-specific care",
+          },
+          normal: {
+            acne: "preventative care",
+            pigmentation: "maintenance brightening",
+            aging: "preventative anti-aging",
+            sensitivity: "gentle maintenance",
+          },
+        };
+        return focusAreas[skinType]?.[concern] || "general skin health";
       }
     </script>
   </body>
