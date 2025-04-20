@@ -1,18 +1,15 @@
 export async function handler(event) {
-  const { userProfile } = JSON.parse(event.body || "{}");
-
-  const API_URL = "https://api.openai.com/v1/chat/completions";
-  const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-
-  if (!OPENAI_API_KEY) {
-    throw new Error(
-      "API key is not set. Please check your environment variables."
-    );
-  }
-  if (!userProfile) {
-    throw new Error("User profile is required for recommendations.");
-  }
   try {
+    const { userProfile } = JSON.parse(event.body || "{}");
+
+    // Better validation
+    if (!userProfile || typeof userProfile !== "object") {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: "Invalid user profile format" }),
+      };
+    }
+
     const systemInstructions = `You are an expert dermatologist assistant specializing in Indian skincare. 
         Recommend products available in India based on the user's profile.`;
 

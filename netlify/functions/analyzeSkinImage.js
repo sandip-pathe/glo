@@ -1,23 +1,17 @@
 export async function handler(event) {
-  const { imageDataUrl } = JSON.parse(event.body || "{}");
-
-  // Log the image data URL for debugging
-  console.log("Received image data:", imageDataUrl);
+  const { skinImage } = JSON.parse(event.body || "{}");
+  console.log("Received image data:", skinImage);
 
   const API_URL = "https://api.openai.com/v1/chat/completions";
-  const apiKey = process.env.OPENAI_API_KEY;
+  const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
   try {
-    // Check if the image data is valid
-    if (!imageDataUrl || !imageDataUrl.startsWith("data:image")) {
+    if (!skinImage || !skinImage.startsWith("data:image")) {
       throw new Error("Invalid image format");
     }
 
-    // Check if the API key is set
-    if (!apiKey) {
-      throw new Error(
-        "API key is not set. Please check your environment variables."
-      );
+    if (!OPENAI_API_KEY) {
+      throw new Error("API key is not set");
     }
 
     const response = await fetch(API_URL, {

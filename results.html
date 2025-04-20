@@ -70,7 +70,7 @@
       }
 
       .step-dot.completed {
-        background: var(--completed-color);
+        background: var(--primary);
       }
 
       .step-dot.active::after {
@@ -321,6 +321,7 @@
           const formData = JSON.parse(
             sessionStorage.getItem("glowGuideFormData")
           );
+          console.log("Form Data:", formData);
           if (!formData || !formData.skinType || !formData.concern) {
             throw new Error("Invalid quiz data - please start over");
           }
@@ -379,6 +380,7 @@
             skinImage: skinAnalysis ? JSON.stringify(skinAnalysis) : null,
           };
 
+          console.log("User Profile:", userProfile);
           try {
             const result = await fetchProductRecommendations(userProfile);
             await updateStepDetail(
